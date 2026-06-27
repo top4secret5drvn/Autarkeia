@@ -1,0 +1,2 @@
+# Autarkeia
+Cogito + verdict
