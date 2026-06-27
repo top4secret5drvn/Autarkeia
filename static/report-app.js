@@ -378,6 +378,13 @@ async function saveToDatabase(state) {
   AIFrame.setState(newState);
   alert('✅ Сохранено в БД');
 
+  fetchAPI(`/api/cognitive/hypotheses?date=${state.reportDate}`).then(data => {
+    if (data.data && data.data.length > 0) {
+      console.log('💡 Вердикт выдвинул гипотезы:', data.data);
+      AIFrame.setState({ showAuditToast: true, auditHypotheses: data.data });
+    }
+  }).catch(e => console.warn('cognitive hypotheses', e));
+
   await loadDatesList();
   await loadAllTimeTotals();
 }
@@ -823,12 +830,72 @@ function PillButton(label, onClick, primary = false) {
 }
 
 // ========== Основной рендер ==========
+async function loadCognitiveAudit(date = AIFrame.state.reportDate) {
+  try {
+    const [analysis, synergies, hypotheses] = await Promise.all([
+      fetchAPI(`/api/cognitive/analyze?date=${date}`),
+      fetchAPI(`/api/cognitive/synergies?date=${date}&days=30`),
+      fetchAPI(`/api/cognitive/hypotheses?date=${date}`)
+    ]);
+    AIFrame.setState({
+      auditAnalysis: analysis.data || null,
+      auditSynergies: synergies.data || [],
+      auditHypotheses: hypotheses.data || [],
+      activeReportTab: 'audit',
+      showReport: false
+    });
+  } catch (e) {
+    console.warn('loadCognitiveAudit', e);
+    AIFrame.setState({
+      auditError: e.message || String(e),
+      auditAnalysis: null,
+      auditSynergies: [],
+      auditHypotheses: [],
+      activeReportTab: 'audit',
+      showReport: false
+    });
+  }
+}
+
+async function applyAuditSynergy(synergy) {
+  try {
+    await fetchAPI('/api/cognitive/apply_synergy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: `MDL: ${(synergy.pattern || []).join(' + ')}`,
+        proposal: synergy.proposal,
+        habit_ids: synergy.habit_ids || []
+      })
+    });
+    alert('✅ Синергия отправлена в сочетания');
+  } catch (e) {
+    alert(`⚠️ Не удалось применить синергию: ${e.message}`);
+  }
+}
+
+async function confirmAuditHypothesis(hypothesis, confirmed) {
+  try {
+    await fetchAPI('/api/cognitive/confirm_hypothesis', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hypothesis_id: hypothesis.id, confirmed })
+    });
+    AIFrame.setState({
+      auditHypotheses: (AIFrame.state.auditHypotheses || []).filter(h => h.id !== hypothesis.id)
+    });
+  } catch (e) {
+    alert(`⚠️ Не удалось сохранить ответ: ${e.message}`);
+  }
+}
+
 function App(state) {
   const {
     tasksText, parsedTasks, friction, thoughts, reportDate, dayState,
     firstDay, firstDate, lastDay, lastDate,
     showReport, showCatalogModal, showEditModal, editHabitIndex,
-    activeReportTab, habitSearch, skills, periodStats, financePeriodStats, goals
+    activeReportTab, habitSearch, skills, periodStats, financePeriodStats, goals,
+    auditAnalysis, auditSynergies, auditHypotheses, auditError, showAuditToast
   } = state;
 
   const activeTab = activeReportTab || 'plan';
@@ -900,7 +967,8 @@ function App(state) {
     ['div', { className: 'retro-tab-bar' },
       ['button', { className: `retro-tab ${activeTab === 'plan' ? 'active' : ''}`, onClick: () => AIFrame.setState({ activeReportTab: 'plan', showReport: false }) }, 'План'],
       ['button', { className: `retro-tab ${activeTab === 'stats' ? 'active' : ''}`, onClick: () => AIFrame.setState({ activeReportTab: 'stats' }) }, 'Характеристики'],
-      ['button', { className: `retro-tab ${activeTab === 'report' ? 'active' : ''}`, onClick: () => AIFrame.setState({ activeReportTab: 'report', showReport: true }) }, 'Отчёт']
+      ['button', { className: `retro-tab ${activeTab === 'report' ? 'active' : ''}`, onClick: () => AIFrame.setState({ activeReportTab: 'report', showReport: true }) }, 'Отчёт'],
+      ['button', { className: `retro-tab ${activeTab === 'audit' ? 'active' : ''}`, onClick: () => loadCognitiveAudit(reportDate) }, '🧠 Аудит']
     ],
 
     ['div', { className: 'retro-panel' },
@@ -1079,6 +1147,50 @@ function App(state) {
       ['pre', { className: 'report-body' }, reportOutputText]
     ] : null,
 
+
+    activeTab === 'audit' ? ['div', { className: 'audit-panel card' },
+      SectionHeader('🧠 Когнитивный Аудит',
+        ['button', { className: 'pill-btn', onClick: () => loadCognitiveAudit(reportDate) }, '↻ Обновить']
+      ),
+      auditError ? ['div', { className: 'audit-error' }, `⚠️ ${auditError}`] : null,
+      ['div', { className: 'audit-grid' },
+        ['div', { className: 'card audit-card' },
+          ['h3', null, '🧬 Синергии MDL'],
+          ...(auditSynergies && auditSynergies.length ? auditSynergies.map(synergy =>
+            ['div', { className: 'audit-item' },
+              ['strong', null, (synergy.pattern || []).join(' + ') || 'Паттерн'],
+              ['div', null, `→ ${synergy.consequent || 'обобщение'} · поддержка ${synergy.support || 0} · уверенность ${Math.round((synergy.confidence || 0) * 100)}%`],
+              ['button', { className: 'pill-btn', onClick: () => applyAuditSynergy(synergy) }, 'Применить как Сочетание']
+            ]
+          ) : [['div', { className: 'muted' }, 'Пока нет обнаруженных синергий.']])
+        ],
+        ['div', { className: 'card audit-card' },
+          ['h3', null, '🕵️ Гипотезы'],
+          ...(auditHypotheses && auditHypotheses.length ? auditHypotheses.map(hypothesis =>
+            ['div', { className: 'audit-item' },
+              ['strong', null, hypothesis.question || hypothesis.missing_fact],
+              ['div', null, `Уверенность ${Math.round((hypothesis.confidence || 0.5) * 100)}%`],
+              ['button', { className: 'pill-btn', onClick: () => confirmAuditHypothesis(hypothesis, true) }, 'Да, это так'],
+              ['button', { className: 'pill-btn', onClick: () => confirmAuditHypothesis(hypothesis, false) }, 'Нет']
+            ]
+          ) : [['div', { className: 'muted' }, 'Нет гипотез для выбранного дня.']])
+        ]
+      ],
+      ['pre', {
+        className: 'retro-terminal',
+        style: 'background:#050805;color:#7CFF7C;padding:12px;border:1px solid #7CFF7C;white-space:pre-wrap;overflow:auto;max-height:320px;'
+      }, auditAnalysis?.xai_report || 'XAI-отчёт появится после обновления аудита.']
+    ] : null,
+
+    showAuditToast ? ['div', {
+      className: 'audit-toast card',
+      style: 'position:fixed;right:24px;bottom:24px;z-index:50;max-width:320px;'
+    },
+      ['strong', null, '💡 Вердикт выдвинул гипотезы'],
+      ['div', null, 'Загляните во вкладку «Аудит».'],
+      ['button', { className: 'pill-btn', onClick: () => AIFrame.setState({ activeReportTab: 'audit', showAuditToast: false }) }, 'Открыть аудит']
+    ] : null,
+
     // Модалка справочника
     showCatalogModal ? ['div', { className: 'modal-overlay', onClick: (e) => { if (e.target === e.currentTarget) AIFrame.setState({ showCatalogModal: false }); } },
       ['div', { className: 'modal-card' },
@@ -1155,7 +1267,12 @@ async function init() {
     skills: [],
     goals: [],
     periodStats: {},
-    financePeriodStats: {}
+    financePeriodStats: {},
+    auditAnalysis: null,
+    auditSynergies: [],
+    auditHypotheses: [],
+    auditError: '',
+    showAuditToast: false
   };    
 
   AIFrame.mount('app', initialState, App);
