@@ -27,6 +27,7 @@ from pages.export.api import register_export_api
 
 # === НОВОЕ: импорт планировщика ===
 from core.planner import register_planner
+from core.cognitive_bridge import register_cognitive
 
 # === НОВОЕ: импорт API для связей между модулями ===
 from pages.combinations.api import register_combinations_api
@@ -83,6 +84,7 @@ register_stats_api(app, db)
 
 # === НОВОЕ: регистрация планировщика ===
 register_planner(app, db)
+register_cognitive(app, db)
 
 # После регистрации остальных сущностей (после register_planner):
 register_ideas(app, db)
