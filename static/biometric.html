@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Биометрика | Планировщик</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/biometric.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/lib/ai-frame.js"></script>
+    <script src="/static/biometric-app.js"></script>
+</head>
+<body class="apple-lisa">
+    <div data-include="/static/includes/header.html"></div>
+    <div class="page-shell">
+        <div class="mac-window">
+            <div class="mac-titlebar">
+                <div class="mac-titlebar__controls">
+                    <span></span><span></span><span></span>
+                </div>
+                <div class="mac-titlebar__label">Биометрика</div>
+                <div class="mac-titlebar__spacer"></div>
+            </div>
+            <div class="mac-window__body">
+                <div id="app"></div>
+            </div>
+        </div>
+    </div>
+    <div data-include="/static/includes/footer.html"></div>
+    <script src="/static/include-loader.js"></script>
+</body>
+</html>

@@ -1,0 +1,223 @@
+:root {
+    /* Retro Windows 95 / OS2 palette */
+    --bg: #008080;
+    --card-bg: #e2e2e2;
+    --border: #7a7a7a;
+    --accent: #000080;
+    --text: #000;
+    --retro-border-light: #ffffff;
+    --retro-border-dark: #7a7a7a;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
+h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    padding: 6px 12px;
+    background: var(--card-bg);
+    border: 2px outset var(--retro-border-light);
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text);
+    font-weight: bold;
+    font-family: "MS Sans Serif", "Chicago", Arial, sans-serif;
+    box-shadow: inset 1px 1px 0 var(--retro-border-light), inset -1px -1px 0 var(--retro-border-dark);
+}
+
+.tab-btn.active {
+    color: var(--text);
+    background: var(--card-bg);
+    border-style: inset;
+    box-shadow: inset -1px -1px 0 var(--retro-border-light), inset 1px 1px 0 var(--retro-border-dark);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.prediction-item {
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 0;
+    box-shadow: inset 1px 1px 0 var(--retro-border-light), inset -1px -1px 0 var(--retro-border-dark);
+}
+
+.toolbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+th, td {
+    text-align: left;
+    padding: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+th {
+    background: var(--card-bg);
+    font-weight: bold;
+    border: 2px outset var(--retro-border-light);
+}
+
+button {
+    padding: 6px 12px;
+    border: 2px outset var(--retro-border-light);
+    background: var(--card-bg);
+    border-radius: 0;
+    cursor: pointer;
+    font-weight: bold;
+    font-family: "MS Sans Serif", "Chicago", Arial, sans-serif;
+    box-shadow: inset 1px 1px 0 var(--retro-border-light), inset -1px -1px 0 var(--retro-border-dark);
+}
+
+button:hover {
+    background: var(--card-bg);
+    border-color: var(--border);
+}
+
+button:active {
+    border-style: inset;
+    box-shadow: inset -1px -1px 0 var(--retro-border-light), inset 1px 1px 0 var(--retro-border-dark);
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    padding: 12px;
+    border-radius: 0;
+    min-width: 300px;
+    max-width: 500px;
+    width: 90%;
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 2px solid var(--border);
+    box-shadow: 2px 2px 0 #7a7a7a, inset 1px 1px 0 var(--retro-border-light), inset -1px -1px 0 var(--retro-border-dark);
+}
+
+.close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.form-group {
+    margin-bottom: 12px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 4px 6px;
+    border: 2px inset var(--retro-border-light);
+    border-radius: 0;
+    background: #ffffff;
+    font-family: "MS Sans Serif", "Chicago", Arial, sans-serif;
+    font-size: 12px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.intake-date-picker {
+    margin-bottom: 12px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.intake-table {
+    width: auto;
+    margin-top: 8px;
+}
+
+.intake-table td {
+    border: none;
+}
+
+.activity-log-table {
+    width: auto;
+    margin-top: 8px;
+}
+
+.activity-log-table td {
+    border: none;
+}
+
+.activity-date-picker {
+    margin-bottom: 12px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.charts-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.chart-container {
+    flex: 1;
+    min-width: 250px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+}

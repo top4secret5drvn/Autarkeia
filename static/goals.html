@@ -1,0 +1,33 @@
+<!-- static/goals.html -->
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Цели | Планировщик</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/goals.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="apple-lisa">
+    <div data-include="/static/includes/header.html"></div>
+    <div class="page-shell">
+        <div class="mac-window">
+            <div class="mac-titlebar">
+                <div class="mac-titlebar__controls">
+                    <span></span><span></span><span></span>
+                </div>
+                <div class="mac-titlebar__label">Цели</div>
+                <div class="mac-titlebar__spacer"></div>
+            </div>
+            <div class="mac-window__body">
+                <div id="app"></div>   <!-- AIFrame монтируется сюда -->
+            </div>
+        </div>
+    </div>
+    <div data-include="/static/includes/footer.html"></div>
+    <script src="/static/lib/ai-frame.js"></script>
+    <script src="/static/goals-app.js"></script>
+    <script src="/static/include-loader.js"></script>
+</body>
+</html>

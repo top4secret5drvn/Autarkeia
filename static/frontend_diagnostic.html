@@ -1,0 +1,73 @@
+<!-- Добавить в report.html для диагностики фронтенда -->
+<script>
+// Выполнить в консоли браузера для диагностики
+
+window.frontendDiagnostics = () => {
+  console.log("🔵 === ФРОНТЕНД ДИАГНОСТИКА ===");
+  
+  // 1. Проверить элементы DOM
+  console.log("\n📋 Проверка DOM элементов:");
+  const requiredElements = [
+    'tasksInput', 'parseBtn', 'sampleBtn', 'loadFromDBBtn', 
+    'saveToDBBtn', 'tasksList', 'reportOutput', 'frictionIndex'
+  ];
+  
+  let missingCount = 0;
+  requiredElements.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      console.log(`  ✅ ${id}: найден`);
+    } else {
+      console.error(`  ❌ ${id}: НЕ НАЙДЕН`);
+      missingCount++;
+    }
+  });
+  
+  if (missingCount === 0) {
+    console.log("✅ Все элементы DOM найдены");
+  } else {
+    console.error(`❌ Потеряно ${missingCount} элементов!`);
+  }
+  
+  // 2. Проверить глобальные переменные
+  console.log("\n📊 Проверка глобальных переменных:");
+  console.log(`  parsed: ${typeof window.parsed === 'object' ? '✅ массив' : '❌ не определён'}`);
+  console.log(`  elements: ${typeof window.elements === 'object' ? '✅ объект' : '❌ не определён'}`);
+  console.log(`  habitsCatalog: ${Array.isArray(window.habitsCatalog) ? `✅ массив (${window.habitsCatalog.length} элементов)` : '❌ не определён'}`);
+  
+  // 3. Проверить функции
+  console.log("\n🔧 Проверка функций:");
+  const requiredFunctions = [
+    'parseTextInput', 'renderTasks', 'parseTextToStructure', 
+    'calculateTotalStats', 'loadDatesFromDB', 'saveToDatabase'
+  ];
+  
+  requiredFunctions.forEach(fname => {
+    if (typeof window[fname] === 'function') {
+      console.log(`  ✅ ${fname}()`);
+    } else {
+      console.error(`  ❌ ${fname}() НЕ НАЙДЕНА`);
+    }
+  });
+  
+  // 4. Тест: нажать кнопку "Пример" programmatically
+  console.log("\n🧪 ТЕСТ: Нажатие кнопки 'Пример' programmatically");
+  try {
+    const btn = document.getElementById('sampleBtn');
+    if (btn) {
+      console.log("  Найдена кнопка, нажимаем...");
+      btn.click();
+      console.log("  ✅ Кнопка нажата, проверьте result выше");
+    } else {
+      console.error("  ❌ Кнопка не найдена!");
+    }
+  } catch (e) {
+    console.error("  ❌ Ошибка при нажатии:", e);
+  }
+  
+  console.log("\n✔ Диагностика завершена");
+};
+
+// Вызвать автоматически в консоли:
+// frontendDiagnostics()
+</script>

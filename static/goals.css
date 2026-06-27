@@ -1,0 +1,45 @@
+/* static/goals.css */
+:root {
+  --bg: #008080;
+  --card-bg: #e2e2e2;
+  --border: #7a7a7a;
+  --accent: #000080;
+  --text: #000;
+  --retro-border-light: #ffffff;
+  --retro-border-dark: #7a7a7a;
+  --goal-progress-color: #000080;
+}
+
+.goal-card {
+  background: var(--card-bg);
+  border: 2px solid var(--border);
+  border-radius: 0;
+  padding: 12px;
+  margin-bottom: 12px;
+  box-shadow: inset 1px 1px 0 var(--retro-border-light), inset -1px -1px 0 var(--retro-border-dark);
+  transition: all 0.1s;
+}
+.goal-card:hover {
+  border-color: var(--border);
+}
+
+progress {
+  appearance: none;
+  width: 100%;
+  height: 16px;
+  border: 2px inset var(--retro-border-light);
+  background: #ffffff;
+}
+progress::-webkit-progress-bar {
+  background-color: #ffffff;
+  border-radius: 0;
+}
+progress::-webkit-progress-value {
+  border-radius: 0;
+  background-color: var(--accent);
+}
+
+progress::-moz-progress-bar {
+  background-color: var(--accent);
+  border-radius: 0;
+}

@@ -1,0 +1,39 @@
+/* IDEAS PAGE STYLES */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+header nav a {
+  margin-left: 12px;
+  color: #2b8be6;
+  text-decoration: none;
+}
+#newIdeaSection{margin-top:16px;margin-bottom:12px}
+#newIdeaSection input{width:70%;padding:6px;box-sizing:border-box}
+#newIdeaSection button{padding:6px 12px}
+#ideasList{list-style:none;padding:0}
+#ideasList li{padding:8px;border-bottom:1px solid #ddd;display:flex;align-items:center;justify-content:space-between}
+#ideasList li.completed .title{text-decoration:line-through;color:#666}
+#ideasList li .title{cursor:pointer;flex:1}
+#ideasList li .realism-badge{background:#e0e0e0;border-radius:12px;padding:2px 8px;font-size:0.8em;margin-right:8px}
+#ideasList li button{margin-left:6px}
+.detail{background:#fff;border:1px solid #eee;padding:12px;border-radius:6px;margin-top:16px}
+.detail textarea{width:100%;height:80px;box-sizing:border-box;margin-bottom:8px}
+.detail label{display:block;margin:8px 0 4px;font-weight:600}
+.deltas{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.deltas input{width:100%;box-sizing:border-box;padding:6px}
+.controls{margin-top:8px;text-align:right}
+.controls button{margin-left:6px}
+
+/* Override global layout: make main panel wider on Ideas page only */
+body.apple-lisa .app-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+}

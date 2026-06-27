@@ -1,0 +1,421 @@
+Проект: EXPRIMENTAL_DISCO
+Файл: report_architecture_migration_plan.txt
+Дата: 2026-05-11
+
+Цель:
+- Описать, какие фронтенд-модули в статике стоит переносить следующими.
+- Дать конкретный план переноса UI/логики/парсинга.
+- Показать уникальные возможности новой архитектуры с примерами.
+
+1. Следующие модули фронтенда для миграции
+
+  a) static/report-app.js
+     - причина: главный модуль, где смешаны UI, состояние, загрузка данных,
+       формирование отчёта и сохранение.
+     - что менять:
+       * убрать функцию `calculateFullStats` из рендера и перенести в ядро правил
+       * сделать `App()` чистым описателем интерфейса
+       * разделить обращения к API и состояние на отдельный сервис
+     - зачем:
+       * код станет проще тестировать и сопровождать
+       * фронтенд будет меньше зависеть от деталей реализации данных
+
+  b) static/lib/report-rules.js
+     - причина: именно сюда логично выносить парсинг и вычисления.
+     - что менять:
+       * сделать парсер `parseText` и `parseCharacteristics` полностью независимыми
+       * вынести информацию о бонусах и комбинациях в декларативную структуру
+       * добавить `ReportRules.evaluate(parsedTasks, context)`
+     - зачем:
+       * позволит использовать одну логику и для генерации отчёта, и для тестов
+       * даст возможность плавно перейти к rules-driven архитектуре
+
+  c) static/lib/ai-frame.js
+     - причина: это инфраструктура фронтенда, на которой строится весь UI.
+     - что менять:
+       * отчётливо разделить части: render, state, rules, parser
+       * развить `AIFrame.Rules` в простой движок фактов/правил
+       * оставить `AIFrame.Refal` как инструмент строковых преобразований
+     - зачем:
+       * позволит задавать бизнес-логику конфигурационно
+       * упростит добавление новых экранов и форм
+
+  d) static/report.js
+     - причина: старый генератор отчёта может служить референсом
+       и проверкой корректности новой логики.
+     - что делать:
+       * сравнить с `report-app.js`
+       * выделить общие блоки, которые можно перенести в `report-rules.js`
+
+2. Что переносить в следующем цикле
+
+  a) UI-логика
+     - компонентный рендер: `App()` и субрутины `AIFrame.SUBROUTINE`
+     - минимизировать прямые DOM-операции
+     - состояние должно обновляться через `AIFrame.setState` и actions
+
+  b) Бизнес-логику
+     - `calculateFullStats` → `ReportRules` / `AIFrame.Rules`
+     - формирование отчёта -> чистая функция `generateFullReport(state)`
+     - правила бонусов, связей и условий → данные + engine
+
+  c) Текстовый DSL
+     - парсинг привычек должен обрабатываться только в `report-rules.js`
+     - форматирование отчётов — только через `AIFrame.Refal` или через шаблоны
+     - тогда изменение внешнего вида отчёта не затрагивает рендер UI
+
+3. Примеры, как может выглядеть новая архитектура
+
+  a) Правило бонуса привычки:
+     ```js
+     AIFrame.Rules.rule(
+       ['combo_bonus', '$A', '$B', '$I', '$S'],
+       ['habit_done', '$A'],
+       ['habit_done', '$B']
+     );
+     ```
+     Результат: если обе привычки выполнены, engine автоматически добавит
+     бонусные характеристики.
+
+  b) Проверка биометрии:
+     ```js
+     AIFrame.Rules.rule(
+       ['bio_bonus', '$Habit', '$ActivityId'],
+       ['habit_done', '$Habit'],
+       ['activity_done', '$ActivityId']
+     );
+     ```
+     Это проще, чем вручную обходить `currentBiometricData` и думать обо всех
+     вариантах `if`.
+
+  c) UI как дерево:
+     ```js
+     ['div', null,
+       ['button', { onClick: () => AIFrame.setState({ showReport: true }) }, 'Сформировать отчёт'],
+       ['textarea', { value: tasksText, onInput: onTextChange }]
+     ]
+     ```
+     Такое представление позволяет легко выделять компоненты и менять структуру.
+
+  d) Форматирование отчёта через Refal:
+     ```js
+     AIFrame.Refal.rules = [
+       { pattern: /^ХАРАКТЕРИСТИКИ:/gm, replacement: '=== ХАРАКТЕРИСТИКИ ===' }
+     ];
+     ```
+     Это легче расширять, чем искать все строки вручную.
+
+4. Фишки, которые на новой архитектуре делают приложение круче
+
+  a) Динамические правила
+     - можно встраивать или переключать бонусы в runtime
+     - пример: включить "активный доход" → добавить новое правило
+       без переписывания `calculateFullStats`
+
+  b) Переиспользуемый текстовый DSL
+     - одна и та же модель привычек работает и для отчёта, и для сохранения,
+       и для автозаполнения шаблонов
+     - в vanilla JS это придётся держать в нескольких местах
+
+  c) Компонентный рендер
+     - добавить новый блок, например `ReportPreview`, проще, чем править
+       мешанину DOM-операций
+     - переиспользовать `subroutine` как UI-виджет
+
+  d) Отдельный rule engine
+     - на основе фактов можно быстро отвечать на вопросы типа:
+       "какие бонусы сработали?", "почему значение изменилось?"
+     - в ванильном JS это тяжело сделать декларативно
+
+5. Что нельзя и не нужно делать сейчас
+
+  - не переносить весь бекенд в JS: питоновский бек остаётся.
+  - не делать `AIFrame` монолитным контейнером для всего подряд.
+  - не смешивать `ReportRules` и UI-рендер в одном файле.
+  - не делать каждый UI-блок сам по себе «чёрным ящиком» — лучше ясные входы/выходы.
+
+6. Итоговая дорожная карта по статике
+
+  1) Выделить все вычисления и парсинг в `static/lib/report-rules.js`.
+  2) Переписать `static/lib/ai-frame.js` так, чтобы он был модульным.
+  3) Оставить `static/report-app.js` за orchestrator/UI, но убрать из него `calculateFullStats`.
+  4) Использовать `Refal` только для форматирования отчётов, а не для основной логики.
+  5) В будущем сделать `static/lib/report-service.js` для запросов, если потребуется.
+
+7. Какие модули менять следующими
+
+  - `static/report-app.js`
+  - `static/lib/report-rules.js`
+  - `static/lib/ai-frame.js`
+  - `static/report.js`
+  - `static/lib/report-rules.js` как основной rule-core
+
+8. Другие модули статики для миграции
+
+  a) Биометрические модули (static/biometric.html, static/biometric.js, static/biometric.css)
+     - что там сейчас: формы для ввода веществ, приёмов пищи, измерений, активности
+     - как переносить:
+       * UI-формы описать как S-выражения в `BiometricApp()`
+       * валидацию и расчёты (калории, баланс) вынести в `BiometricRules`
+       * связи с привычками через `AIFrame.Rules` (например, бонусы за активность)
+     - пример новой архитектуры:
+       ```js
+       // В biometric.js
+       function BiometricApp(state) {
+         return ['div', null,
+           ['h2', null, 'Биометрия'],
+           ['form', { onSubmit: handleIntakeSubmit },
+             ['select', { name: 'substance' }, ...substances.map(s => ['option', { value: s.id }, s.name])],
+             ['input', { type: 'checkbox', name: 'taken' }],
+             ['button', null, 'Добавить приём']
+           ]
+         ];
+       }
+       // Правила для бонусов
+       AIFrame.Rules.rule(
+         ['activity_bonus', '$Habit', '$Activity'],
+         ['habit_done', '$Habit'],
+         ['activity_done', '$Activity']
+       );
+       ```
+     - фишки: формы станут декларативными, бонусы — конфигурационными
+
+  b) Финансовые модули (static/finance.html, static/finance.js, static/finance.css)
+     - что там сейчас: таблицы транзакций, формы добавления доходов/расходов
+     - как переносить:
+       * рендер таблиц через S-выражения
+       * расчёты баланса и категорий в `FinanceRules`
+       * связи с привычками (финансовые бонусы) через rules engine
+     - пример:
+       ```js
+       function FinanceApp(state) {
+         return ['div', null,
+           ['table', null,
+             ['thead', null, ['tr', null, ['th', null, 'Дата'], ['th', null, 'Сумма'], ['th', null, 'Категория']]],
+             ['tbody', null, ...state.transactions.map(tx => ['tr', null,
+               ['td', null, tx.date],
+               ['td', null, tx.amount],
+               ['td', null, tx.category_name]
+             ])]
+           ]
+         ];
+       }
+       // Правило для финансового бонуса
+       AIFrame.Rules.rule(
+         ['finance_bonus', '$Habit', '$IncomeType'],
+         ['habit_done', '$Habit'],
+         ['income_added', '$IncomeType']
+       );
+       ```
+     - фишки: таблицы легче рефакторить, правила бонусов динамичны
+
+  c) Модули целей (static/goals.html, static/goals.js, static/goals.css)
+     - что там сейчас: список целей с прогрессом, формы создания
+     - как переносить:
+       * прогресс-бары и статусы через декларативный рендер
+       * логику расчёта прогресса в `GoalsRules`
+       * мотивационные правила через `AIFrame.Rules`
+     - пример:
+       ```js
+       function GoalsApp(state) {
+         return ['div', null,
+           ...state.goals.map(g => ['div', { className: 'goal-card' },
+             ['h3', null, g.name],
+             ['progress', { value: g.current, max: g.target }],
+             ['span', null, `${g.current}/${g.target} (${g.percent}%)`]
+           ])
+         ];
+       }
+       // Правило мотивации
+       AIFrame.Rules.rule(
+         ['motivation_boost', '$Goal', '$Habit'],
+         ['goal_progress', '$Goal', '$Percent'],
+         ['habit_streak', '$Habit', '$Streak']
+       );
+       ```
+     - фишки: прогресс легче визуализировать декларативно, мотивация — через правила
+
+  d) Модули навыков (static/skills.html, static/skills.js, static/skills.css)
+     - что там сейчас: уровни навыков, часы, прогресс
+     - как переносить:
+       * рендер уровней и прогресса через S-выражения
+       * расчёты опыта и уровней в `SkillsRules`
+       * правила прокачки через rules engine
+     - пример:
+       ```js
+       function SkillsApp(state) {
+         return ['div', null,
+           ...state.skills.map(s => ['div', { className: 'skill' },
+             ['strong', null, s.name],
+             ['div', null, `Уровень ${s.level}: ${s.level_name}`],
+             ['progress', { value: s.progress_percent, max: 100 }],
+             ['span', null, `Часы: ${s.total_hours}`]
+           ])
+         ];
+       }
+       // Правило прокачки
+       AIFrame.Rules.rule(
+         ['skill_level_up', '$Skill', '$NewLevel'],
+         ['skill_hours', '$Skill', '$Hours'],
+         ['level_threshold', '$NewLevel', '$ThresholdHours']
+       );
+       ```
+     - фишки: уровни легче балансировать через правила, UI — декларативное
+
+  e) Модули комбинаций (static/combinations.html, static/combinations.js)
+     - что там сейчас: управление связями привычек, биометрии, финансов
+     - как переносить:
+       * формы редактирования связей через S-выражения
+       * логику применения комбинаций в `CombinationsRules`
+       * сами правила комбинаций как данные для `AIFrame.Rules`
+     - пример:
+       ```js
+       function CombinationsApp(state) {
+         return ['div', null,
+           ['h2', null, 'Комбинации привычек'],
+           ...state.combinations.map(c => ['div', null,
+             `${c.habit_a_name} + ${c.habit_b_name} → бонус I:${c.i_bonus}`
+           ])
+         ];
+       }
+       // Комбинация как правило
+       AIFrame.Rules.rule(
+         ['combo_bonus', '$A', '$B', '$Bonuses'],
+         ['habit_done', '$A'],
+         ['habit_done', '$B']
+       );
+       ```
+     - фишки: связи легче редактировать декларативно, бонусы — через rules
+
+  f) Модули экспорта (static/export.html, static/export.js)
+     - что там сейчас: формы для экспорта данных в CSV/JSON
+     - как переносить:
+       * UI форм через S-выражения
+       * логику экспорта в `ExportRules` (трансформации данных)
+       * шаблоны экспорта через Refal-подобные правила
+     - пример:
+       ```js
+       function ExportApp(state) {
+         return ['div', null,
+           ['button', { onClick: () => exportToCSV(state.data) }, 'Экспорт в CSV'],
+           ['button', { onClick: () => exportToJSON(state.data) }, 'Экспорт в JSON']
+         ];
+       }
+       // Правило трансформации для экспорта
+       AIFrame.Refal.rules = [
+         { pattern: /habit:(\w+)/g, replacement: '$1' },
+         { pattern: /stats:(.+)/g, replacement: 'Характеристики: $1' }
+       ];
+       ```
+     - фишки: экспорт легче кастомизировать через правила, UI — простое
+
+  g) Планировщик (static/planner.html, static/planner.js, static/planner.css)
+     - что там сейчас: календарь, планирование задач
+     - как переносить:
+       * рендер календаря через S-выражения
+       * логику планирования в `PlannerRules`
+       * правила приоритетов через `AIFrame.Rules`
+     - пример:
+       ```js
+       function PlannerApp(state) {
+         return ['div', null,
+           ['div', { className: 'calendar' },
+             ...state.days.map(d => ['div', { className: 'day' },
+               ['span', null, d.date],
+               ...d.tasks.map(t => ['div', null, t.name])
+             ])
+           ]
+         ];
+       }
+       // Правило приоритета
+       AIFrame.Rules.rule(
+         ['task_priority', '$Task', 'high'],
+         ['task_deadline', '$Task', '$Soon'],
+         ['habit_depends', '$Task', '$Habit']
+       );
+       ```
+     - фишки: планирование легче автоматизировать через правила
+
+  h) Задачи (static/tasks.html, static/tasks.js, static/tasks.css)
+     - что там сейчас: список задач, чек-листы
+     - как переносить:
+       * рендер списка через S-выражения
+       * логику зависимостей в `TasksRules`
+       * правила завершения через rules engine
+     - пример:
+       ```js
+       function TasksApp(state) {
+         return ['div', null,
+           ...state.tasks.map(t => ['div', null,
+             ['input', { type: 'checkbox', checked: t.done, onChange: toggleTask }],
+             ['span', null, t.name]
+           ])
+         ];
+       }
+       // Правило завершения
+       AIFrame.Rules.rule(
+         ['task_complete', '$Task'],
+         ['subtasks_done', '$Task'],
+         ['dependencies_met', '$Task']
+       );
+       ```
+     - фишки: зависимости задач легче моделировать через правила
+
+  i) Главная страница (static/index.html, static/index.js)
+     - что там сейчас: навигация, обзор
+     - как переносить:
+       * меню и виджеты через S-выражения
+       * логику дашборда в `IndexRules`
+       * правила отображения через rules
+     - пример:
+       ```js
+       function IndexApp(state) {
+         return ['div', null,
+           ['nav', null,
+             ['a', { href: '/habits' }, 'Привычки'],
+             ['a', { href: '/biometric' }, 'Биометрия']
+           ],
+           ['div', { className: 'dashboard' },
+             ['div', null, `Сегодня: ${state.todayStats.habitsDone} привычек`]
+           ]
+         ];
+       }
+       // Правило виджета
+       AIFrame.Rules.rule(
+         ['show_widget', 'motivation'],
+         ['streak_broken', '$Habit'],
+         ['motivation_needed', 'true']
+       );
+       ```
+     - фишки: дашборд легче персонализировать через правила
+
+  j) Общие библиотеки (static/lib/include-loader.js)
+     - что там сейчас: загрузка общих компонентов
+     - как переносить:
+       * сделать централизованный загрузчик для S-выражений
+       * правила включения через rules
+     - пример:
+       ```js
+       // В include-loader.js
+       AIFrame.SUBROUTINE('Header', () => ['header', null, 'EXPERIMENTAL_DISCO']);
+       AIFrame.SUBROUTINE('Footer', () => ['footer', null, '© 2026']);
+       ```
+     - фишки: переиспользование компонентов проще
+
+9. Обновлённая дорожная карта по статике
+
+  1) Начать с отчётных модулей (`report-app.js`, `report-rules.js`, `ai-frame.js`).
+  2) Перейти к биометрии и финансам как ключевым источникам данных.
+  3) Затем цели, навыки, комбинации для мотивации и связей.
+  4) Экспорт, планировщик, задачи для функциональности.
+  5) Главная страница и общие компоненты в конце.
+  6) Везде использовать LISP для UI, Prolog для правил, Smalltalk для сообщений, Refal для текста.
+
+10. Итоговые фишки новой архитектуры для всего фронтенда
+
+  - Единая система правил для всех модулей: бонусы, связи, валидация.
+  - Декларативный UI: все формы и списки как данные, легче тестировать и менять.
+  - Переиспользуемые компоненты: `AIFrame.SUBROUTINE` для header/footer/widgets.
+  - Текстовый DSL: парсинг и форматирование через Refal везде, где нужен текст.
+  - Smalltalk messaging: события между модулями через `AIFrame.Messenger`.
+  - Всё это делает приложение более модульным, декларативным и расширяемым, чем vanilla JS с DOM-манипуляциями.

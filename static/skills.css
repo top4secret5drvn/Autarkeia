@@ -1,0 +1,92 @@
+/* static/skills.css */
+:root {
+  --bg: #008080;
+  --card-bg: #e2e2e2;
+  --border: #7a7a7a;
+  --accent: #000080;
+  --text: #000;
+  --retro-border-light: #ffffff;
+  --retro-border-dark: #7a7a7a;
+}
+
+.skill-card {
+  background: var(--card-bg);
+  border: 2px solid var(--border);
+  border-radius: 0;
+  padding: 12px;
+  margin-bottom: 12px;
+  box-shadow: inset 1px 1px 0 var(--retro-border-light), inset -1px -1px 0 var(--retro-border-dark);
+}
+
+.progress-bar {
+  background: #ffffff;
+  border: 2px inset var(--retro-border-light);
+  overflow: hidden;
+  height: 16px;
+  border-radius: 0;
+}
+
+.progress-fill {
+  background: var(--accent);
+  height: 100%;
+  width: 0%;
+  border-radius: 0;
+}
+
+.level-badge {
+  display: inline-block;
+  background: var(--accent);
+  color: white;
+  border-radius: 0;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: bold;
+  border: 2px outset var(--retro-border-light);
+  box-shadow: inset 1px 1px 0 var(--retro-border-light), inset -1px -1px 0 var(--retro-border-dark);
+}
+
+.habit-link-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.habit-link-row select {
+  flex: 2;
+  padding: 4px 8px;
+  border: 2px inset var(--retro-border-light);
+  background: #ffffff;
+  font-family: "MS Sans Serif", "Chicago", Arial, sans-serif;
+  font-size: 12px;
+}
+
+.habit-link-row input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 2px inset var(--retro-border-light);
+  background: #ffffff;
+  font-family: "MS Sans Serif", "Chicago", Arial, sans-serif;
+  font-size: 12px;
+}
+
+.habit-link-row button {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border: 2px outset var(--retro-border-light);
+  background: var(--card-bg);
+  border-radius: 0;
+  cursor: pointer;
+  font-weight: bold;
+  font-family: "MS Sans Serif", "Chicago", Arial, sans-serif;
+  box-shadow: inset 1px 1px 0 var(--retro-border-light), inset -1px -1px 0 var(--retro-border-dark);
+}
+
+.habit-link-row button:hover {
+  background: var(--card-bg);
+}
+
+.habit-link-row button:active {
+  border-style: inset;
+  box-shadow: inset -1px -1px 0 var(--retro-border-light), inset 1px 1px 0 var(--retro-border-dark);
+}

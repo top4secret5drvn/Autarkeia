@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/planner.css">
+  <title>Планировщик — Roadmap</title>
+</head>
+<body class="apple-lisa">
+  <div data-include="/static/includes/header.html"></div>
+  <div class="page-shell">
+    <div class="mac-window">
+      <div class="mac-titlebar">
+        <div class="mac-titlebar__controls">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div class="mac-titlebar__label">Planner.app</div>
+        <div class="mac-titlebar__spacer"></div>
+      </div>
+      <div class="mac-window__body">
+        <div id="app"></div>
+      </div>
+    </div>
+  </div>
+  <script src="/static/include-loader.js"></script>
+  <script src="/static/lib/ai-frame.js"></script>
+  <script src="/static/planner-app.js"></script>
+  <div data-include="/static/includes/footer.html"></div>
+</body>
+</html>
